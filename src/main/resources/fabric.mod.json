@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "id": "railbots",
+  "version": "${version}",
+
+  "name": "Railbots",
+  "description": "Robot",
+  "authors": [
+    "MariaTheDinkus"
+  ],
+  "contact": {
+    "homepage": "",
+    "sources": ""
+  },
+
+  "license": "MIT",
+  "icon": "assets/railbots/icon.png",
+
+  "environment": "*",
+  "entrypoints": {
+    "fabric-datagen": [
+      "to.tinypota.railbots.datagen.RailbotsDatagen"
+    ],
+    "main": [
+      "to.tinypota.railbots.Railbots"
+    ],
+    "client": [
+      "to.tinypota.railbots.RailbotsClient"
+    ],
+    "rei_client": [
+      "to.tinypota.railbots.compat.RailbotsREI"
+    ]
+  },
+  "mixins": [
+    "railbots.mixins.json"
+  ],
+  "accessWidener" : "railbots.accesswidener",
+
+  "depends": {
+    "fabricloader": ">=0.14.21",
+    "fabric-api": "*",
+    "minecraft": "~1.20",
+    "java": ">=17"
+  }
+}

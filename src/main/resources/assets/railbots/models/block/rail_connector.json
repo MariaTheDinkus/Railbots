@@ -1,0 +1,22 @@
+{
+	"credit": "Made with Blockbench",
+	"parent": "block/block",
+	"textures": {
+		"0": "block/anvil",
+		"particle": "block/anvil"
+	},
+	"elements": [
+		{
+			"name": "connector",
+			"from": [6.5, 6.5, 0],
+			"to": [9.5, 9.5, 6.5],
+			"faces": {
+				"north": {"uv": [6.5, 6.5, 9.5, 9.5], "texture": "#0"},
+				"east": {"uv": [0, 6.5, 6.5, 9.5], "rotation": 180, "texture": "#0"},
+				"west": {"uv": [0, 6.5, 6.5, 9.5], "texture": "#0"},
+				"up": {"uv": [0, 6.5, 6.5, 9.5], "rotation": 90, "texture": "#0"},
+				"down": {"uv": [0, 6.5, 6.5, 9.5], "rotation": 270, "texture": "#0"}
+			}
+		}
+	]
+}
