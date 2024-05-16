@@ -1,9 +1,14 @@
 package to.tinypota.railbots.common.entity;
 
 import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
+import net.minecraft.block.LeveledCauldronBlock;
+import net.minecraft.block.cauldron.CauldronBehavior;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
+import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.mob.PathAwareEntity;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.server.world.ServerWorld;
@@ -55,9 +60,34 @@ public class RailbotEntity extends PathAwareEntity {
 	}
 	
 	@Override
+	public boolean damage(DamageSource source, float amount) {
+		if (source.getAttacker() instanceof PlayerEntity) {
+			remove(RemovalReason.DISCARDED);
+		}
+		
+		return super.damage(source, amount);
+	}
+	
+	@Override
 	public void tick() {
 		super.tick();
+		
 		if (!getWorld().isClient()) {
+			// Messing around with potential sprinkler functionality?
+			if (getWorld().getBlockState(getBlockPos().up()).getBlock() == Blocks.WATER_CAULDRON) {
+				if (counter < 200) {
+					counter++;
+					
+					((ServerWorld) getWorld()).spawnParticles(ParticleTypes.DRIPPING_WATER, getX(), getY(), getZ(), 5, 0.125, -0.125, 0.125, 0);
+				} else {
+					counter = 0;
+					BlockState state = getWorld().getBlockState(getBlockPos().up());
+					LeveledCauldronBlock.decrementFluidLevel(state, getWorld(), getBlockPos().up());
+				}
+			} else {
+				counter = 0;
+			}
+			
 			if (path == null || path.isEmpty()) {
 				var railState = (RailbotsRailState) RailbotsServerState.getSubState(getWorld().getServer(), RailbotsStorages.RAILBOTS_RAIL_STATE);
 				var railGraph = railState.getRailGraph();
@@ -65,7 +95,7 @@ public class RailbotEntity extends PathAwareEntity {
 					if (player.isSneaking()) {
 						path = railGraph.findNearestPath(getBlockPos(), player.getBlockPos());
 						if (!path.isEmpty())
-							player.sendMessage(Text.literal("Railbot is on the move!"), false);
+							player.sendMessage(Text.literal("Railbot is on the move!"), true);
 					}
 				});
 			} else if (getWorld().getTime() % 3 == 0 && !path.isEmpty()) {

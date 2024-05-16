@@ -6,13 +6,11 @@ import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3i;
-import to.tinypota.railbots.Railbots;
 
 import java.util.*;
 
 public class RailGraph {
-	private Multimap<BlockPos, BlockPos> graph;
+	private final Multimap<BlockPos, BlockPos> graph;
 	
 	public RailGraph() {
 		graph = HashMultimap.create();
@@ -36,7 +34,6 @@ public class RailGraph {
 	}
 	
 	public Collection<BlockPos> getConnectedRails(BlockPos rail) {
-		// Retrieve all connected rail blocks for a given rail block
 		return graph.get(rail);
 	}
 	
@@ -87,7 +84,7 @@ public class RailGraph {
 	
 	public Deque<BlockPos> findPath(BlockPos source, BlockPos target) {
 		if (!graph.containsKey(source) || !graph.containsKey(target)) {
-			return new LinkedList<>(); // Empty stack
+			return new LinkedList<>();
 		}
 		
 		var openSet = new PriorityQueue<>(Comparator.comparingDouble(Node::getTotalCost));
@@ -104,6 +101,8 @@ public class RailGraph {
 			}
 			
 			for (var neighbor : graph.get(currentNode.getPosition())) {
+				if (neighbor.getManhattanDistance(source) > 50) continue;
+				
 				var newCost = currentNode.getCostFromStart() + distance(currentNode.getPosition(), neighbor);
 				var neighborNode = nodes.getOrDefault(neighbor, new Node(neighbor));
 				if (newCost < neighborNode.getCostFromStart()) {
@@ -119,7 +118,7 @@ public class RailGraph {
 			}
 		}
 		
-		return new LinkedList<>(); // Empty stack
+		return new LinkedList<>();
 	}
 	
 	public Deque<BlockPos> findNearestPath(BlockPos source, BlockPos target) {
@@ -127,9 +126,17 @@ public class RailGraph {
 			return new LinkedList<>(); // Empty stack
 		}
 		
-		// Find the nearest node to the target position
-		var nearestNode = findNearestNode(target);
-		Railbots.LOGGER.info(String.valueOf(nearestNode));
+		// Find the nearest node to the target position within 50 blocks
+		BlockPos nearestNode = null;
+		double minDistance = Double.MAX_VALUE;
+		for (var node : graph.keySet()) {
+			double distance = node.getManhattanDistance(target);
+			if (distance < minDistance && node.getManhattanDistance(source) <= 50) {
+				minDistance = distance;
+				nearestNode = node;
+			}
+		}
+		
 		if (nearestNode == null) {
 			return new LinkedList<>(); // Empty stack
 		}
@@ -148,7 +155,9 @@ public class RailGraph {
 			}
 			
 			for (var neighbor : graph.get(currentNode.getPosition())) {
-				var newCost = currentNode.getCostFromStart() + distance(currentNode.getPosition(), neighbor);
+				if (neighbor.getManhattanDistance(source) > 50) continue;
+				
+				double newCost = currentNode.getCostFromStart() + distance(currentNode.getPosition(), neighbor);
 				var neighborNode = nodes.getOrDefault(neighbor, new Node(neighbor));
 				if (newCost < neighborNode.getCostFromStart()) {
 					neighborNode.setPrevious(currentNode);
@@ -166,28 +175,12 @@ public class RailGraph {
 		return new LinkedList<>(); // Empty stack
 	}
 	
-	private BlockPos findNearestNode(BlockPos target) {
-		var minDistance = 5.0;
-		BlockPos nearestNode = null;
-		
-		for (var node : graph.keySet()) {
-			var distance = distance(node, target);
-			if (distance < minDistance) {
-				minDistance = distance;
-				nearestNode = node;
-			}
-		}
-		
-		return nearestNode;
-	}
-	
 	private double distance(BlockPos start, BlockPos end) {
-		var diff = end.subtract(start);
-		return Math.sqrt(diff.getX() * diff.getX() + diff.getY() * diff.getY() + diff.getZ() * diff.getZ());
+		return start.getManhattanDistance(end);
 	}
 	
 	private double estimateCost(BlockPos start, BlockPos end) {
-		return distance(start, end);
+		return start.getManhattanDistance(end);
 	}
 	
 	private Deque<BlockPos> reconstructPath(Node targetNode) {
